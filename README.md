@@ -1,5 +1,13 @@
 # Hopenet #
 
+### Conda env
+ref: https://stackoverflow.com/questions/41274007/anaconda-export-environment-file
+
+`conda env export | grep -v "^prefix: " > environment.yml`
+
+Either way, the other user then runs:
+
+`conda env create -f environment.yml`
 <div align="center">
   <img src="https://i.imgur.com/K7jhHOg.png" width="380"><br><br>
 </div>

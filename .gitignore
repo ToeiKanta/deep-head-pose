@@ -4,3 +4,6 @@ data/*
 output/*
 *.jpg
 *.png
+files
+Test
+.idea
