@@ -1,6 +1,6 @@
 # Hopenet #
 
-### Useage
+### Usage
 
 `python code/test_on_video_dlib.py --snapshot ./files/hopenet_robust_alpha1.pkl --face_model ./files/mmod_human_face_detector.dat --video ./Test/ZoomClass2.mp4 --output_string test --n_frames 1 --gpu 0 `
 ### Conda env
