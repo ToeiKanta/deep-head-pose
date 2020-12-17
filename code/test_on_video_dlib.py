@@ -60,7 +60,7 @@ if __name__ == '__main__':
 
     print('Loading snapshot.')
     # Load snapshot
-    saved_state_dict = torch.load(snapshot_path, map_location='cpu')
+    saved_state_dict = torch.load(snapshot_path) #, map_location='cpu')
     model.load_state_dict(saved_state_dict)
 
     print('Loading data.')
