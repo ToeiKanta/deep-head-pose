@@ -94,7 +94,7 @@ if __name__ == '__main__':
     model = hopenet.AlexNet(66)
     load_filtered_state_dict(model, model_zoo.load_url(model_urls['alexnet']))
 
-    print 'Loading data.'
+    print('Loading data.')
 
     transformations = transforms.Compose([transforms.Scale(240),
     transforms.RandomCrop(224), transforms.ToTensor(),
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     elif args.dataset == 'AFW':
         pose_dataset = datasets.AFW(args.data_dir, args.filename_list, transformations)
     else:
-        print 'Error: not a valid dataset name'
+        print('Error: not a valid dataset name'
         sys.exit()
     train_loader = torch.utils.data.DataLoader(dataset=pose_dataset,
                                                batch_size=batch_size,
@@ -137,7 +137,7 @@ if __name__ == '__main__':
                                   {'params': get_fc_params(model), 'lr': args.lr * 5}],
                                    lr = args.lr)
 
-    print 'Ready to train network.'
+    print('Ready to train network.')
     for epoch in range(num_epochs):
         for i, (images, labels, cont_labels, name) in enumerate(train_loader):
             images = Variable(images).cuda(gpu)
@@ -189,6 +189,6 @@ if __name__ == '__main__':
 
         # Save models at numbered epochs.
         if epoch % 1 == 0 and epoch < num_epochs:
-            print 'Taking snapshot...'
+            print('Taking snapshot...')
             torch.save(model.state_dict(),
             'output/snapshots/' + args.output_string + '_epoch_'+ str(epoch+1) + '.pkl')

@@ -1,5 +1,8 @@
 # Hopenet #
 
+### Useage
+
+`python code/test_on_video_dlib.py --snapshot ./hopenet_robust_alpha1.pkl --face_model ./mmod_human_face_detector.dat --video ./Test/ZoomClass2.mp4 --output_string test --n_frames 1  `
 ### Conda env
 ref: https://stackoverflow.com/questions/41274007/anaconda-export-environment-file
 
