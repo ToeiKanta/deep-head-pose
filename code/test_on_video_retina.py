@@ -13,8 +13,9 @@ import torch.backends.cudnn as cudnn
 import torchvision
 import torch.nn.functional as F
 from PIL import Image
+from face_detection import RetinaFace
 
-import datasets, hopenet, utils
+import hopenet, utils
 
 from skimage import io
 import dlib
@@ -22,7 +23,9 @@ import dlib
 def parse_args():
     """Parse input arguments."""
     parser = argparse.ArgumentParser(description='Head pose estimation using the Hopenet network.')
+    parser.add_argument('--scale', metavar='FLOAT', dest='video_scale', type=float, default=1.0, help='Video scale.')
     parser.add_argument('-sf', metavar='N', dest='start_frame', type=int, default=0, help='Start frame number.')
+    parser.add_argument('--rotate', dest='rotate',action='store_true',help='Rotate frame right 90 degree.')
     parser.add_argument('--gpu', dest='gpu_id', help='GPU device id to use [0]',
             default=0, type=int)
     parser.add_argument('--snapshot', dest='snapshot', help='Path of model snapshot.',
@@ -40,13 +43,14 @@ if __name__ == '__main__':
     args = parse_args()
 
     cudnn.enabled = True
-
+    scale = args.video_scale
     batch_size = 1
     gpu = args.gpu_id
     snapshot_path = args.snapshot
     out_dir = 'output/video'
     video_path = args.video_path
-
+    detector = RetinaFace(gpu_id=0)
+    
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
@@ -87,9 +91,14 @@ if __name__ == '__main__':
     width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))   # float
     height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)) # float
 
+    widthScale = int(width * scale)
+    heightScale = int(height * scale)
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-    out = cv2.VideoWriter('output/video/output-%s.avi' % args.output_string, fourcc, args.fps, (width, height))
+    if args.rotate:
+        out = cv2.VideoWriter('output/video/output-%s.avi' % args.output_string, fourcc, args.fps, (heightScale, widthScale))
+    else:
+        out = cv2.VideoWriter('output/video/output-%s.avi' % args.output_string, fourcc, args.fps, (widthScale, heightScale))
 
     # # Old cv2
     # width = int(video.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))   # float
@@ -109,21 +118,23 @@ if __name__ == '__main__':
         ret,frame = video.read()
         if ret == False:
             break
-
+        frame = cv2.resize(frame, (int(widthScale), int(heightScale)))
+        if args.rotate:
+            frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
         cv2_frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
 
-        # Dlib detect
-        dets = cnn_face_detector(cv2_frame, 1)
-
-        for idx, det in enumerate(dets):
+        # Retina detect
+        # dets = cnn_face_detector(cv2_frame, 1)
+        faces = detector(cv2_frame)
+        for box, landmarks, score in faces: # box = x,y,w,h โดย frame[y:h, x:w]
             # Get x_min, y_min, x_max, y_max, conf
-            x_min = det.rect.left()
-            y_min = det.rect.top()
-            x_max = det.rect.right()
-            y_max = det.rect.bottom()
-            conf = det.confidence
+            x_min = box[0]#-(box[2]-box[0])/5
+            y_min = box[1]#-(box[3]-box[1])/2
+            x_max = box[2]#+(box[2]-box[0])/5
+            y_max = box[3]#+(box[3]-box[1])/2
+            conf = score
 
-            if conf > 1.0:
+            if conf > 0.3:
                 bbox_width = abs(x_max - x_min)
                 bbox_height = abs(y_max - y_min)
                 x_min -= 2 * bbox_width / 4
@@ -157,7 +168,7 @@ if __name__ == '__main__':
                 # utils.plot_pose_cube(frame, yaw_predicted, pitch_predicted, roll_predicted, (x_min + x_max) / 2, (y_min + y_max) / 2, size = bbox_width)
                 utils.draw_axis(frame, yaw_predicted, pitch_predicted, roll_predicted, tdx = (x_min + x_max) / 2, tdy= (y_min + y_max) / 2, size = bbox_height/2)
                 # Plot expanded bounding box
-                # cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0,255,0), 1)
+                cv2.rectangle(frame, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (0,255,0), 1)
 
         out.write(frame)
         frame_num += 1
