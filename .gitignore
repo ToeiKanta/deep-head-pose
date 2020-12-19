@@ -7,3 +7,5 @@ output
 files
 Test
 .idea
+code/output
+code/__pycache__
